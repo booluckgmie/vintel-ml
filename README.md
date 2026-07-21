@@ -12,8 +12,11 @@ anywhere (Netlify, GitHub Pages, S3, etc.) and works offline once loaded.
 ship-classifier/
   data/train/{naval,civilian}/   <- your labeled training images (not committed)
   data/val/{naval,civilian}/     <- your labeled validation images (not committed)
+  seed_images/{naval,civilian}/  <- a handful of confirmed real photos (committed)
   scripts/
     generate_dummy_data.py       <- procedural placeholder data for pipeline smoke-tests
+    augment_seed_images.py       <- expands seed_images/ into many crop/zoom/rotation
+                                     variants under data/ when real data is scarce
     train.py                     <- trains MobileNetV2 classifier (PyTorch)
     export_onnx.py                <- exports trained model to ONNX
     copy_ort_assets.js            <- (postinstall) copies the onnxruntime-web WASM
@@ -43,17 +46,39 @@ data/val/civilian/*.jpg
 Aim for 300-1000+ images per class to start; balance the classes. An 80/20
 train/val split is a reasonable default.
 
-Don't have real labeled images yet? Generate a small procedural placeholder
-dataset to smoke-test the whole pipeline first:
+Don't have real labeled images yet? There are two placeholder options,
+useful at different stages:
+
+**No real photos at all — smoke-test the pipeline only:**
 ```bash
 python scripts/generate_dummy_data.py --data_dir data --train_per_class 60 --val_per_class 15
 ```
-This draws simple grey/angular "naval-ish" and colorful/boxy "civilian-ish"
-shapes — enough to verify training → export → in-browser inference works,
-but **not real training data**. Expect it to overfit (great train accuracy,
-~50% i.e. chance-level val accuracy) since it's random-init on a handful of
-synthetic images with no genuine visual signal — replace the `data/` folders
-with real photos before trusting any prediction.
+Draws simple grey/angular "naval-ish" and colorful/boxy "civilian-ish"
+shapes. Verifies training → export → in-browser inference wiring works, but
+carries **zero real visual signal** — expect ~50% (chance-level) validation
+accuracy and predictions that don't transfer to real photos at all.
+
+**A few real photos, not yet enough for a real dataset:**
+```bash
+# put 1+ confirmed real photo per class in seed_images/{naval,civilian}/
+python scripts/augment_seed_images.py --seed_dir seed_images --data_dir data \
+    --train_count 50 --val_count 12
+```
+Expands each seed photo into many variants via random crop position, random
+zoom percentage, small rotation, color jitter, and noise. This is real
+pixel content (not shapes), so the model can learn actual ship features
+from it — but every variant still derives from the *same* one or two
+underlying vessels. It will reliably recognize those specific ships again
+(useful for confirming the pipeline end-to-end on known real examples), but
+says nothing about how well it generalizes to a *different* ship it's never
+seen. Treat `seed_images/` as a starting point, not a substitute for
+collecting genuinely distinct real photos (different vessels, angles,
+lighting, distances) once you can — that's what real generalization needs.
+
+One caveat either way: crop out non-vessel clutter (UI overlays, screenshot
+chrome, watermarked banners) before adding an image to `seed_images/` —
+otherwise the model can learn to key off that clutter instead of the ship
+itself.
 
 ## 2. Train the model
 
