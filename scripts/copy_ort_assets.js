@@ -2,8 +2,11 @@
 // from our own origin (no CDN dependency, works offline/on mobile). Runs
 // automatically after `npm install` — the binary itself isn't committed to
 // git, it's regenerated from the installed npm package every time.
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SRC_DIR = path.join(__dirname, "..", "node_modules", "onnxruntime-web", "dist");
 const DEST_DIR = path.join(__dirname, "..", "public", "ort");
