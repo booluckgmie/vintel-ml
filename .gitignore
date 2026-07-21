@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.netlify/
+data/train/*/*
+data/val/*/*
+!data/train/*/.gitkeep
+!data/val/*/.gitkeep
+model/*.pth
