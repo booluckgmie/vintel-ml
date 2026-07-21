@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 
+import onnx
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -26,8 +27,8 @@ def build_model(num_classes: int):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ckpt", default="model/ship_classifier.pth")
-    parser.add_argument("--out", default="model/ship_classifier.onnx")
+    parser.add_argument("--ckpt", default="checkpoints/ship_classifier.pth")
+    parser.add_argument("--out", default="public/model/ship_classifier.onnx")
     args = parser.parse_args()
 
     checkpoint = torch.load(args.ckpt, map_location="cpu")
@@ -45,10 +46,20 @@ def main():
         input_names=["input"],
         output_names=["output"],
         dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}},
-        opset_version=13,
+        opset_version=17,
+        dynamo=False,
     )
 
-    # Save class order alongside the model so the Netlify function
+    # Some torch versions write large initializers to a sibling
+    # `<name>.onnx.data` file. Reload and re-save as a single
+    # self-contained .onnx file so it can be served/committed as one asset.
+    data_file = args.out + ".data"
+    if os.path.exists(data_file):
+        onnx_model = onnx.load(args.out, load_external_data=True)
+        onnx.save_model(onnx_model, args.out, save_as_external_data=False)
+        os.remove(data_file)
+
+    # Save class order alongside the model so the inference code
     # doesn't need to guess label ordering.
     classes_path = os.path.join(os.path.dirname(args.out), "classes.json")
     with open(classes_path, "w") as f:

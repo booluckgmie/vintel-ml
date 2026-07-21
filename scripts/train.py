@@ -48,8 +48,9 @@ class ShipDataset(Dataset):
         return img, label
 
 
-def build_model(num_classes: int):
-    model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V1)
+def build_model(num_classes: int, pretrained: bool = True):
+    weights = models.MobileNet_V2_Weights.IMAGENET1K_V1 if pretrained else None
+    model = models.mobilenet_v2(weights=weights)
     model.classifier = nn.Sequential(
         nn.Dropout(p=0.2),
         nn.Linear(model.last_channel, num_classes),
@@ -83,7 +84,9 @@ def main():
     parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--out", default="model/ship_classifier.pth")
+    parser.add_argument("--out", default="checkpoints/ship_classifier.pth")
+    parser.add_argument("--no_pretrained", action="store_true",
+                         help="Skip downloading ImageNet weights (random init) — useful for offline smoke tests.")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -109,7 +112,7 @@ def main():
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=2)
     val_dl = DataLoader(val_ds, batch_size=args.batch_size, num_workers=2)
 
-    model = build_model(num_classes=len(train_ds.classes)).to(device)
+    model = build_model(num_classes=len(train_ds.classes), pretrained=not args.no_pretrained).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 

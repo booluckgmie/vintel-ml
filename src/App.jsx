@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { classifyImage } from "./api";
+import { classifyImage } from "./classifier";
 
 export default function App() {
   const [preview, setPreview] = useState(null);
