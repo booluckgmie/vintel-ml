@@ -1,6 +1,22 @@
 import { useState, useRef } from "react";
 import { classifyImage } from "./classifier";
 
+const CAPABILITY_NOTE = {
+  naval:
+    "Visual classification only. Hull class, armament, and vessel identity are not determined by this model.",
+  civilian:
+    "Visual classification only. Vessel type, operator, and cargo are not determined by this model.",
+};
+
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="upload-icon" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 16V4M12 4l-4 4M12 4l4 4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function App() {
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
@@ -11,13 +27,6 @@ export default function App() {
   const [notes, setNotes] = useState("");
   const [submittedNotes, setSubmittedNotes] = useState("");
   const inputRef = useRef(null);
-
-  const CAPABILITY_NOTE = {
-    naval:
-      "Visual classification only. Hull class, armament, and vessel identity are not determined by this model.",
-    civilian:
-      "Visual classification only. Vessel type, operator, and cargo are not determined by this model.",
-  };
 
   async function handleFile(file) {
     if (!file) return;
@@ -48,7 +57,10 @@ export default function App() {
 
   return (
     <div className="page">
-      <h1>Ship Classifier</h1>
+      <div className="brand">
+        <span className="brand-dot" />
+        <h1>Ship Classifier</h1>
+      </div>
       <p className="subtitle">Upload a vessel photo — the model predicts Naval vs Civilian.</p>
 
       <div className="field">
@@ -77,15 +89,21 @@ export default function App() {
       </div>
 
       <div
-        className="dropzone"
+        className={`dropzone ${loading ? "dropzone-busy" : ""}`}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
         onClick={() => inputRef.current.click()}
       >
         {preview ? (
-          <img src={preview} alt="preview" className="preview" />
+          <div className="preview-wrap">
+            <img src={preview} alt="preview" className="preview" />
+            {loading && <div className="scan-line" />}
+          </div>
         ) : (
-          <p>Click or drag an image here</p>
+          <div className="dropzone-empty">
+            <UploadIcon />
+            <p>Click or drag an image here</p>
+          </div>
         )}
         <input
           ref={inputRef}
@@ -96,7 +114,7 @@ export default function App() {
         />
       </div>
 
-      {loading && <p className="status">Running inference…</p>}
+      {loading && <p className="status">Running inference<span className="dots" /></p>}
       {error && <p className="error">{error}</p>}
 
       {result && (
@@ -108,12 +126,20 @@ export default function App() {
 
           <div className="result-body">
             <h2>{result.label}</h2>
-            <p>Confidence: {(result.confidence * 100).toFixed(1)}%</p>
+            <p className="confidence-text">Confidence: {(result.confidence * 100).toFixed(1)}%</p>
+            <div className="meter">
+              <div
+                className={`meter-fill meter-${result.label}`}
+                style={{ width: `${(result.confidence * 100).toFixed(1)}%` }}
+              />
+            </div>
+
             {result.top && (
               <ul className="ranked">
                 {result.top.map((r) => (
                   <li key={r.label}>
-                    {r.label}: {(r.confidence * 100).toFixed(1)}%
+                    <span>{r.label}</span>
+                    <span>{(r.confidence * 100).toFixed(1)}%</span>
                   </li>
                 ))}
               </ul>

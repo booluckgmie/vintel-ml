@@ -37,6 +37,8 @@ function preprocess(bitmap) {
   canvas.width = INPUT_SIZE;
   canvas.height = INPUT_SIZE;
   const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(bitmap, 0, 0, INPUT_SIZE, INPUT_SIZE);
   const { data } = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
 
