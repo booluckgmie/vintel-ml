@@ -6,6 +6,8 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [aisId, setAisId] = useState("");
+  const [submittedAisId, setSubmittedAisId] = useState("");
   const inputRef = useRef(null);
 
   async function handleFile(file) {
@@ -13,6 +15,7 @@ export default function App() {
     setError(null);
     setResult(null);
     setPreview(URL.createObjectURL(file));
+    setSubmittedAisId(aisId.trim());
     setLoading(true);
     try {
       const json = await classifyImage(file);
@@ -37,6 +40,19 @@ export default function App() {
     <div className="page">
       <h1>Ship Classifier</h1>
       <p className="subtitle">Upload a vessel photo — the model predicts Naval vs Civilian.</p>
+
+      <div className="field">
+        <label htmlFor="ais-id">AIS MMSI (optional)</label>
+        <input
+          id="ais-id"
+          type="text"
+          inputMode="numeric"
+          placeholder="e.g. 566123000"
+          value={aisId}
+          onChange={(e) => setAisId(e.target.value)}
+          className="ais-input"
+        />
+      </div>
 
       <div
         className="dropzone"
@@ -65,6 +81,7 @@ export default function App() {
         <div className="result">
           <h2>{result.label}</h2>
           <p>Confidence: {(result.confidence * 100).toFixed(1)}%</p>
+          {submittedAisId && <p className="ais-tag">AIS MMSI: {submittedAisId}</p>}
           {result.top && (
             <ul className="ranked">
               {result.top.map((r) => (
