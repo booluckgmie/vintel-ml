@@ -6,6 +6,74 @@ Inference runs **entirely client-side** (onnxruntime-web/WASM) — there's no
 server or serverless function, so the whole app is a static site deployable
 anywhere (Netlify, GitHub Pages, S3, etc.) and works offline once loaded.
 
+## Background: how to identify naval vs civilian vessels
+
+Domain reference used to guide this project — the visual and AIS cues a
+human analyst (or, eventually, a multimodal model fusing image + AIS +
+behavior) would use to tell state/naval vessels apart from civilian ones.
+The current image classifier only sees silhouette/shape; it does not use
+any of the AIS-behavioral cues below yet — that's the planned next step
+before combining modalities.
+
+### Visual structural cues
+
+**Bow/hull**
+- Naval: sharper, more raked bows (speed/seakeeping over cargo capacity);
+  lower freeboard relative to length on combatants.
+- Civilian (cargo/tanker/bulker): blunter, boxier bows optimized for
+  displacement efficiency; much higher freeboard, especially container
+  ships and bulkers.
+
+**Superstructure**
+- Naval: set well aft or amidships, angled/faceted surfaces (radar
+  cross-section reduction on modern ships), fewer windows, integrated
+  masts with visible radar/sensor arrays (phased-array panels, dome-shaped
+  SATCOM, ESM masts).
+- Civilian: boxy bridge, usually at the stern (cargo/tankers) or forward
+  (some ferries/cruise ships), lots of windows, minimal sensor clutter —
+  maybe just navigation radar and a funnel.
+
+**Deck layout**
+- Naval: clean, uncluttered deck, often a flight deck/hangar aft, weapons
+  systems (deck guns, VLS cells, missile launchers), boat davits for RHIBs.
+- Civilian: deck dominated by cargo gear — stacked containers, cranes,
+  pipework (tankers), hatch covers (bulkers) — or passenger decks with
+  lifeboats in visible rows.
+
+**Color/paint scheme**
+- Naval: haze grey or camouflage; matte, non-reflective finishes.
+- Civilian: commercial livery/company colors, often glossy hull paint,
+  prominent draft marks and load lines (Plimsoll line) — essentially never
+  seen on warships.
+
+**Stern**
+- Naval: transom stern, often with a flight deck, exposed propulsion shaft
+  covers.
+- Civilian: transom stern with visible rudder/prop wash pattern, often a
+  small crew accommodation block — some large tankers now carry a
+  helicopter pad too, so stern shape alone isn't fully diagnostic.
+
+### AIS as a discriminator
+
+AIS is one of the strongest signals, precisely because of the *absence* or
+*inconsistency* of data:
+- Most naval vessels either don't transmit AIS, transmit intermittently, or
+  broadcast with a masked/generic MMSI and vessel-type code (sometimes
+  listed simply as "Other," or with a military-reserved MMSI prefix in some
+  navies).
+- Civilian vessels above a certain tonnage are legally required (SOLAS Ch.
+  V) to run AIS continuously, so you reliably get vessel type code, IMO
+  number, destination, draft, and speed.
+- Cross-referencing matters: a vessel that visually looks like a warship
+  but has *no* AIS signal, or one with no IMO/callsign populated, is a
+  strong state-vessel indicator. A vessel with full AIS metadata but a
+  naval-looking silhouette might be an auxiliary/support vessel rather than
+  a combatant — some navies run replenishment ships and survey vessels with
+  civilian-style AIS.
+- Behavior helps too: naval patrol patterns (loitering, box patterns,
+  station-keeping near choke points) contrast with civilian point-to-point
+  transits along commercial shipping lanes.
+
 ## Architecture
 
 ```
