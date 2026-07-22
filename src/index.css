@@ -69,10 +69,9 @@ body {
   border-color: #60a5fa;
 }
 
-.ais-tag {
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-top: -0.25rem;
+.notes-input {
+  font-family: inherit;
+  resize: vertical;
 }
 
 .dropzone {
@@ -113,7 +112,43 @@ body {
   margin-top: 1.5rem;
   background: #1e293b;
   border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.banner-naval {
+  background: #164e63;
+  color: #67e8f9;
+}
+
+.banner-civilian {
+  background: #1e3a5f;
+  color: #7dd3fc;
+}
+
+.badge-low {
+  background: #78350f;
+  color: #fcd34d;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.result-body {
   padding: 1.5rem;
+  text-align: center;
 }
 
 .result h2 {
@@ -126,4 +161,28 @@ body {
   margin-top: 1rem;
   color: #94a3b8;
   font-size: 0.9rem;
+}
+
+.assessment {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #334155;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.assessment p {
+  margin: 0.35rem 0;
+}
+
+.assessment-label {
+  color: #94a3b8;
+  margin-right: 0.4rem;
+}
+
+.capability-note {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-top: 0.6rem;
 }

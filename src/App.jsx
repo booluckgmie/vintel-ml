@@ -8,7 +8,16 @@ export default function App() {
   const [error, setError] = useState(null);
   const [aisId, setAisId] = useState("");
   const [submittedAisId, setSubmittedAisId] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submittedNotes, setSubmittedNotes] = useState("");
   const inputRef = useRef(null);
+
+  const CAPABILITY_NOTE = {
+    naval:
+      "Visual classification only. Hull class, armament, and vessel identity are not determined by this model.",
+    civilian:
+      "Visual classification only. Vessel type, operator, and cargo are not determined by this model.",
+  };
 
   async function handleFile(file) {
     if (!file) return;
@@ -16,6 +25,7 @@ export default function App() {
     setResult(null);
     setPreview(URL.createObjectURL(file));
     setSubmittedAisId(aisId.trim());
+    setSubmittedNotes(notes.trim());
     setLoading(true);
     try {
       const json = await classifyImage(file);
@@ -54,6 +64,18 @@ export default function App() {
         />
       </div>
 
+      <div className="field">
+        <label htmlFor="notes">Analyst notes (optional)</label>
+        <textarea
+          id="notes"
+          placeholder="Observations, source, location..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="ais-input notes-input"
+          rows={2}
+        />
+      </div>
+
       <div
         className="dropzone"
         onDragOver={(e) => e.preventDefault()}
@@ -79,18 +101,38 @@ export default function App() {
 
       {result && (
         <div className="result">
-          <h2>{result.label}</h2>
-          <p>Confidence: {(result.confidence * 100).toFixed(1)}%</p>
-          {submittedAisId && <p className="ais-tag">AIS MMSI: {submittedAisId}</p>}
-          {result.top && (
-            <ul className="ranked">
-              {result.top.map((r) => (
-                <li key={r.label}>
-                  {r.label}: {(r.confidence * 100).toFixed(1)}%
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className={`banner banner-${result.label}`}>
+            {result.label === "naval" ? "NAVAL VESSEL" : "CIVILIAN VESSEL"}
+            {result.confidence < 0.7 && <span className="badge-low">LOW CONFIDENCE</span>}
+          </div>
+
+          <div className="result-body">
+            <h2>{result.label}</h2>
+            <p>Confidence: {(result.confidence * 100).toFixed(1)}%</p>
+            {result.top && (
+              <ul className="ranked">
+                {result.top.map((r) => (
+                  <li key={r.label}>
+                    {r.label}: {(r.confidence * 100).toFixed(1)}%
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="assessment">
+              {submittedAisId && (
+                <p>
+                  <span className="assessment-label">AIS MMSI</span> {submittedAisId}
+                </p>
+              )}
+              {submittedNotes && (
+                <p>
+                  <span className="assessment-label">Notes</span> {submittedNotes}
+                </p>
+              )}
+              <p className="capability-note">{CAPABILITY_NOTE[result.label]}</p>
+            </div>
+          </div>
         </div>
       )}
     </div>
